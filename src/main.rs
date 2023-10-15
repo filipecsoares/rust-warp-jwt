@@ -49,13 +49,14 @@ async fn login(user: user::User, users: Vec<user::User>) -> Result<impl Reply, w
     // Find the user by username
     if let Some(found_user) = users.iter().find(|u| u.email == user.email) {
         // Verify the password
-        if auth::verify_password(&found_user.password, &user.password) {
-            // Generate a JWT token for successful login
-            let token = "123"; //auth::generate_jwt(&user.email, "secret_key");
-
-            Ok(warp::reply::json(&token))
-        } else {
-            Ok(warp::reply::json(&"Invalid username or password"))
+        let verified_password = auth::verify_password(&user.password, &found_user.password);
+        match verified_password {
+            Ok(true) => {
+                // Generate a JWT token for successful login
+                let token = "123"; //auth::generate_jwt(&user.email, "secret_key");
+                return Ok(warp::reply::json(&token));
+            },
+            _ => return Ok(warp::reply::json(&"Invalid username or password")),
         }
     } else {
         Ok(warp::reply::json(&"Invalid username or password"))

@@ -1,9 +1,9 @@
 use argon2::{
     password_hash::{
         rand_core::OsRng,
-        PasswordHasher, SaltString
+        PasswordHash, PasswordHasher, SaltString
     },
-    Argon2
+    Argon2, PasswordVerifier
 };
 use serde::{Serialize, Deserialize};
 
@@ -29,8 +29,10 @@ pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Er
     Ok(password_hash)
 }
 
-pub fn verify_password(password: &str, hash: &str) -> bool {
-    true
+pub fn verify_password(password: &str, hash: &str) -> Result<bool, argon2::password_hash::Error>{
+    let argon2 = Argon2::default();
+    let hash = PasswordHash::new(&hash)?;
+    Ok(argon2.verify_password(password.as_bytes(), &hash).is_ok())
 }
 
 #[cfg(test)]
@@ -51,5 +53,22 @@ mod tests {
         let result = hash_password(password);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_verify_password_success() {
+        let password = "password123";
+        let hash = hash_password(password).unwrap();
+        let result = verify_password(password, &hash);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
+    }
+
+    #[test]
+    fn test_verify_password_failure() {
+        let password = "password123";
+
+        assert!(verify_password(password, "invalid_hash").is_err());
     }
 }
