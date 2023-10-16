@@ -1,7 +1,13 @@
 mod auth;
 mod user;
 
+use serde::{Deserialize, Serialize};
 use warp::{Filter, Reply};
+
+#[derive(Serialize, Deserialize)]
+struct Message {
+    message: String,
+}
 
 #[tokio::main]
 async fn main() {
@@ -30,19 +36,23 @@ async fn main() {
 async fn register_user(user: user::User, users: Vec<user::User>) -> Result<impl Reply, warp::Rejection> {
     // Check if the user already exists
     if users.iter().any(|u| u.email == user.email) {
-        return Ok(warp::reply::html("User already exists"));
+        return Ok(warp::reply::json(&Message {
+            message: "User already exists".to_string(),
+        }));
     }
 
     // Hash the password
     let password_hash = auth::hash_password(&user.password);
 
     // Create a new user with the hashed password
-    let user = user::User {
+    let _user = user::User {
         password: password_hash.unwrap(),
         ..user
     };
 
-    Ok(warp::reply::html("User registered successfully"))
+    Ok(warp::reply::json(&Message {
+        message: "User registered successfully".to_string(),
+    }))
 }
 
 async fn login(user: user::User, users: Vec<user::User>) -> Result<impl Reply, warp::Rejection> {
