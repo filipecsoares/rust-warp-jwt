@@ -71,4 +71,14 @@ mod tests {
 
         assert!(verify_password(password, "invalid_hash").is_err());
     }
+
+    #[test]
+    fn test_verify_password_not_equal() {
+        let password = "password123";
+        let hash = hash_password(password).unwrap();
+        let result = verify_password("wrong_password", &hash);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
 }
