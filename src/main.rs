@@ -72,3 +72,19 @@ async fn login(user: user::User, users: Vec<user::User>) -> Result<impl Reply, w
         Ok(warp::reply::json(&"Invalid username or password"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_register_user() {
+        let user = user::User::new(String::from("testuser"), auth::hash_password("testpassword").unwrap());
+        let users = vec![];
+
+        let response = register_user(user, users).await.unwrap();
+        let response = response.into_response();
+        
+        assert_eq!(response.status(), 200);
+    }
+}
