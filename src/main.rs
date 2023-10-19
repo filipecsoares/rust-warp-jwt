@@ -33,7 +33,7 @@ async fn main() {
     warp::serve(register_route.or(login_route)).run(([127, 0, 0, 1], 3030)).await;
 }
 
-async fn register_user(user: user::User, users: Vec<user::User>) -> Result<impl Reply, warp::Rejection> {
+async fn register_user(user: user::User, mut users: Vec<user::User>) -> Result<impl Reply, warp::Rejection> {
     // Check if the user already exists
     if users.iter().any(|u| u.email == user.email) {
         return Ok(warp::reply::json(&Message {
@@ -45,10 +45,13 @@ async fn register_user(user: user::User, users: Vec<user::User>) -> Result<impl 
     let password_hash = auth::hash_password(&user.password);
 
     // Create a new user with the hashed password
-    let _user = user::User {
+    let user = user::User {
         password: password_hash.unwrap(),
         ..user
     };
+
+    // Add the new user to the list of users
+    users.push(user);
 
     Ok(warp::reply::json(&Message {
         message: "User registered successfully".to_string(),
@@ -63,7 +66,7 @@ async fn login(user: user::User, users: Vec<user::User>) -> Result<impl Reply, w
         match verified_password {
             Ok(true) => {
                 // Generate a JWT token for successful login
-                let token = "123"; //auth::generate_jwt(&user.email, "secret_key");
+                let token = auth::generate_jwt(&user.email, "secret_key");
                 return Ok(warp::reply::json(&token));
             },
             _ => return Ok(warp::reply::json(&"Invalid username or password")),
