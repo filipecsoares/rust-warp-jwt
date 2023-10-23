@@ -115,8 +115,7 @@ mod tests {
         match token_data {
             Ok(token) => {
                 assert_eq!(token.claims.sub, email);
-                // You can also check the token's expiration if needed
-                // assert_eq!(token.claims.exp, expiration);
+                assert!(token.claims.exp > SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as usize);
             }
             Err(err) => {
                 panic!("JWT decoding failed: {:?}", err);
